@@ -9,7 +9,6 @@ using CRMConsoleApp.Common;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.IO;
-using Newtonsoft.Json;
 
 namespace CRMConsoleApp.Helpers
 {
@@ -26,9 +25,9 @@ namespace CRMConsoleApp.Helpers
             Dictionary<string, string> keys = new Dictionary<string, string>
             {
                 { "grant_type", "client_credentials" },
-                { "client_id", "b62347f1-aee8-44f2-acde-031a6bada525@6331a538-74db-4756-8dce-572f8c8ceb84" },
-                { "client_secret", "9+/YmIYDmunmZGp+sU1fw6wqHKUDanphfkTKVzgvnw4=" },
-                { "resource", "00000003-0000-0ff1-ce00-000000000000/dynamics365cedevs.sharepoint.com@6331a538-74db-4756-8dce-572f8c8ceb84" }
+                { "client_id", SharePointCredentials.ClientId + "@" + SharePointCredentials.Realm },
+                { "client_secret", SharePointCredentials.ClientSecret },
+                { "resource", SharePointCredentials.Principal + "/" + SharePointCredentials.TargetHost + "@" + SharePointCredentials.Realm }
             };
 
             string httpResponse = await httpClient.PostAsync(SharePointCredentials.Uri, new FormUrlEncodedContent(keys)).Result.Content.ReadAsStringAsync();

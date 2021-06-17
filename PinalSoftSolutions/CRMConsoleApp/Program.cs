@@ -13,8 +13,8 @@ namespace CRMConsoleApp
         {
             try
             {
-                string accessToken = SharePointHelper.GetAccessToken().Result;
-                Console.WriteLine("SharePoint Access Token : {0}", accessToken);
+                string sharePointAccessToken = SharePointHelper.GetAccessToken().Result;
+                Console.WriteLine("SharePoint Access Token : {0}", sharePointAccessToken);
             }
             catch (Exception ex)
             {
