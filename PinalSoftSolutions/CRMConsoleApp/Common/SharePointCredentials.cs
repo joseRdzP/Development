@@ -8,5 +8,6 @@
         public const string Principal = "00000003-0000-0ff1-ce00-000000000000";
         public const string Realm = "6331a538-74db-4756-8dce-572f8c8ceb84";
         public const string Uri = "https://accounts.accesscontrol.windows.net/6331a538-74db-4756-8dce-572f8c8ceb84/tokens/OAuth/2";
+        public const string SPSiteName = "d365dev";
     }
 }

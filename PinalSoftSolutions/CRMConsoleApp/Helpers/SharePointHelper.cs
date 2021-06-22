@@ -11,16 +11,13 @@ using System.IO;
 using CRMConsoleApp.Models;
 using System.Net;
 using System.Web.Script.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CRMConsoleApp.Helpers
 {
     public class SharePointHelper
     {
-        const string msoStsUrl = "https://login.microsoftonline.com/extSTS.srf";
-        const string msoHrdUrl = "https://login.microsoftonline.com/GetUserRealm.srf";
-        const string spowssigninUri = "_forms/default.aspx?wa=wsignin1.0";
-        const string contextInfoQuery = "_api/contextinfo";
-
         public static async Task<string> GetAccessToken()
         {
             SharePointResponse sharePointResponse = new SharePointResponse();
@@ -54,24 +51,62 @@ namespace CRMConsoleApp.Helpers
             return accessToken;
         }
 
-        public static void CreateFolder(string siteUrl, string relativePath)
+        public static async Task<string> ProcessSharePointTasks(string sharePointToken, string folderName)
         {
-            var odataQuery = "_api/web/folders";
-            var contentToPost = @"{ '__metadata': { 'type': 'SP.Folder' }, 'ServerRelativeUrl': '" + relativePath + "'}";
-            byte[] content = Encoding.UTF8.GetBytes(contentToPost);
-            var url = new Uri(string.Format("{0}/{1}", siteUrl, odataQuery));
-            var webRequest = (HttpWebRequest)WebRequest.Create(url);
-            webRequest.Headers.Add("X-RequestDigest", GetFormDigest());
-
+            string creationResponse = string.Empty;
+            string url = "https://" + SharePointCredentials.TargetHost + "/sites/" + SharePointCredentials.SPSiteName + "/";
+            using (HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(url);
+                client.DefaultRequestHeaders.Add("Accept", "application/json; odata=verbose");
+                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + sharePointToken);
+                string digest = GetFormDigest(sharePointToken);
+                Console.WriteLine("Digest : " + digest);
+                Console.WriteLine("------------------------------------------------------------------------------------------");
+                try
+                {
+                    creationResponse = await CreateFolder(client, digest, folderName);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+            }
+            return creationResponse;
         }
 
-        public static string GetFormDigest()
+        public static async Task<string> CreateFolder(HttpClient client, string digest, string folderName)
+        {
+            string creationResponse = string.Empty;
+
+            client.DefaultRequestHeaders.Add("X-RequestDigest", digest);
+            var request = CreateRequest(folderName);
+            string json = JsonConvert.SerializeObject(request);
+            StringContent strContent = new StringContent(json);
+            strContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json;odata=verbose");
+            HttpResponseMessage response = await client.PostAsync("_api/web/getfolderbyserverrelativeurl('/sites/d365dev/Account')/folders", strContent);
+            if (response.IsSuccessStatusCode)
+            {
+                creationResponse = await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                Console.WriteLine(response.StatusCode);
+                Console.WriteLine(response.ReasonPhrase);
+                creationResponse = await response.Content.ReadAsStringAsync();
+            }
+
+            return creationResponse;
+        }
+
+        public static string GetFormDigest(string sharePointToken)
         {
             string formDigest = null;
 
-            string resourceUrl = "http://basesmc15/_api/contextinfo";
+            string resourceUrl = "https://" + SharePointCredentials.TargetHost + "/sites/" + SharePointCredentials.SPSiteName + "/_api/contextinfo";
             HttpWebRequest wreq = WebRequest.Create(resourceUrl) as HttpWebRequest;
-            wreq.UseDefaultCredentials = true;
+            wreq.Headers.Add("Authorization", "Bearer " + sharePointToken);
             wreq.Method = "POST";
             wreq.Accept = "application/json;odata=verbose";
             wreq.ContentLength = 0;
@@ -91,6 +126,13 @@ namespace CRMConsoleApp.Helpers
             formDigest = wi["FormDigestValue"].ToString();
 
             return formDigest;
+        }
+
+        public static object CreateRequest(string folderPath)
+        {
+            var type = new { type = "SP.Folder" };
+            var request = new { __metadata = type, ServerRelativeUrl = folderPath };
+            return request;
         }
     }
 }
