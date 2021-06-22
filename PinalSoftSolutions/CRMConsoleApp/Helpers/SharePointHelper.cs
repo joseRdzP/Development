@@ -100,6 +100,46 @@ namespace CRMConsoleApp.Helpers
             return creationResponse;
         }
 
+        public static string RenameFolder(string sharePointToken, string siteUrl, string relativePath, string newFolderName)
+        {
+            string response = string.Empty;
+
+            string type = GetFolderType(sharePointToken, siteUrl, relativePath);
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                var odataQuery = $"_api/web/GetFolderByServerRelativeUrl('{relativePath}')/ListItemAllFields";
+
+                var url = new Uri(string.Format("{0}{1}", siteUrl, odataQuery));
+
+                var webRequest = (HttpWebRequest)WebRequest.Create(url);
+                webRequest.Headers.Add("Authorization", "Bearer " + sharePointToken);
+                webRequest.Headers.Add("X-RequestDigest", GetFormDigest(sharePointToken));
+                webRequest.Headers.Add("X-HTTP-Method", "MERGE");
+                webRequest.Headers.Add("If-Match", "*");
+                webRequest.ContentType = "application/json;odata=verbose";
+                webRequest.Method = "POST";
+                
+                var contentToPost = @"{ '__metadata': { 'type': '" + type + "' }," +
+                    " 'Title': '" + newFolderName + "'," +
+                    "'FileLeafRef':'" + newFolderName + "'}";
+
+                byte[] content = Encoding.UTF8.GetBytes(contentToPost);
+
+                webRequest.ContentLength = content.Length;
+
+                Stream newStream = webRequest.GetRequestStream();
+                newStream.Write(content, 0, content.Length);
+                newStream.Close();
+
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
+
+                response = webResponse.StatusDescription;
+            }
+
+            return response;
+        }
+
         public static string GetFormDigest(string sharePointToken)
         {
             string formDigest = null;
@@ -133,6 +173,120 @@ namespace CRMConsoleApp.Helpers
             var type = new { type = "SP.Folder" };
             var request = new { __metadata = type, ServerRelativeUrl = folderPath };
             return request;
+        }
+
+        public static string GetFolderType(string sharePointToken, string siteUrl, string relativePath)
+        {
+            var type = string.Empty;
+
+            var odataQuery = $"_api/web/GetFolderByServerRelativeUrl('{relativePath}')/ListItemAllFields";
+
+            var url = new Uri(string.Format("{0}{1}", siteUrl, odataQuery));
+
+            var webRequest = (HttpWebRequest)WebRequest.Create(url);
+            webRequest.Headers.Add("X-RequestDigest", GetFormDigest(sharePointToken));
+            webRequest.Accept = "application/json;odata=verbose";
+            webRequest.Headers.Add("Authorization", "Bearer " + sharePointToken);
+            webRequest.Method = "GET";
+            webRequest.Accept = "application/json;odata=verbose";
+            webRequest.ContentLength = 0;
+            webRequest.ContentType = "application/json";
+
+            string result;
+            WebResponse wresp = webRequest.GetResponse();
+
+            using (StreamReader sr = new StreamReader(wresp.GetResponseStream()))
+            {
+                result = sr.ReadToEnd();
+            }
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                var nResponse = ConvertResponse(result);
+
+                if (nResponse != null)
+                {
+                    var metadata = GetResponseValue(nResponse, "__metadata");
+
+                    if (!string.IsNullOrEmpty(metadata))
+                    {
+                        type = GetResponseValue(ConvertResponse(metadata, ""), "type");
+                    }
+                }
+            }
+            Console.WriteLine("Folder Type : {0}", type);
+            return type;
+        }
+
+        public static Dictionary<string, string> ConvertResponse(string response, string param = "d")
+        {
+            var itemlist = new Dictionary<string, string>();
+            dynamic e;
+
+            if (!string.IsNullOrEmpty(param))
+            {
+                e = JsonConvert.DeserializeObject<dynamic>(response)[param];
+            }
+            else
+            {
+                e = JsonConvert.DeserializeObject<dynamic>(response);
+            }
+
+            if (e != null)
+            {
+                foreach (var item in e)
+                {
+                    if (item != null)
+                    {
+                        if (item.GetType().Name == "JObject")
+                        {
+                            var id = string.Empty;
+                            var name = string.Empty;
+
+                            foreach (var det in item)
+                            {
+                                if (det != null)
+                                {
+                                    var key = ((JProperty)det).Name.ToString();
+                                    var val = ((JProperty)det).Value.ToString();
+
+                                    if (key == "ServerRelativeUrl")
+                                    {
+                                        name = val;
+                                    }
+
+                                    if (key == "Name")
+                                    {
+                                        id = val;
+                                    }
+
+                                    if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(name))
+                                    {
+                                        itemlist.Add(id, name);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var key = ((JProperty)item).Name.ToString();
+                            var val = ((JProperty)item).Value.ToString();
+                            itemlist.Add(key, val);
+                        }
+                    }
+                }
+            }
+            return itemlist;
+        }
+
+        public static string GetResponseValue(Dictionary<string, string> responseList, string key)
+        {
+            if (responseList.ContainsKey(key))
+            {
+                return responseList[key];
+            }
+            return string.Empty;
         }
     }
 }
