@@ -30,26 +30,30 @@ namespace CRMConsoleApp
                 string newFolderName = "300 Alberto-111111";
                 /////////////////////////////////////////////
 
+                Console.WriteLine("------------------------------------------------------------------------------------------");
+
                 //Getting the SharePoint Service Instance
                 SharePointHelper sharePointService = new SharePointHelper(spSiteUrl, spClientId, spClientSecret, spRealm, spPrincipal, spTargetHost);
 
                 //Create Folder
-                //string creationResponse = SharePointHelper.CreateSharePointFolder(sharePointAccessToken, folderName).Result;
-                string creationResponse = sharePointService.CreateFolder($"{entityName}/{folderName}");
+                string creationResponse = await sharePointService.CreateFolder($"{entityName}/{folderName}");
                 Console.WriteLine("Create Folder Response : " + creationResponse);
                 Console.WriteLine("------------------------------------------------------------------------------------------");
+                await Task.Delay(5000);
 
                 //Create Extra Folders
-                string[] folderList = extraFolders.Split(char.Parse(","));
-                foreach (var extraFolderName in folderList)
+                var folderList = extraFolders.Split(',');
+                for (int i = 0; i < folderList.Length; i++)
                 {
-                    string extraFolderCreationResponse = sharePointService.CreateFolder($"{entityName}/{folderName}/{extraFolderName}");
+                    string currentExtraFolderName = folderList[i];
+                    string extraFolderCreationResponse = await sharePointService.CreateFolder($"{entityName}/{folderName}/{currentExtraFolderName}");
                     Console.WriteLine("Create Extra Folder Response : " + extraFolderCreationResponse);
                     Console.WriteLine("------------------------------------------------------------------------------------------");
+                    await Task.Delay(2000);
                 }
 
                 //Rename Folder
-                string renameResponse = sharePointService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
+                string renameResponse = await sharePointService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
                 Console.WriteLine("Rename Folder Response : " + renameResponse);
                 Console.WriteLine("------------------------------------------------------------------------------------------");
             }

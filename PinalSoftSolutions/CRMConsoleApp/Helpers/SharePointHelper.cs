@@ -71,41 +71,50 @@ namespace CRMConsoleApp.Helpers
             return accessToken;
         }
 
-        public string CreateFolder(string relativePath)
+        public async Task<string> CreateFolder(string relativePath)
         {
             string createFolderResponse = string.Empty;
-            string accessToken = GetAccessToken().Result;
 
-            if (!string.IsNullOrEmpty(accessToken))
+            try
             {
-                var odataQuery = "_api/web/folders";
-                var contentToPost = @"{ '__metadata': { 'type': 'SP.Folder' }, 'ServerRelativeUrl': '" + relativePath + "'}";
-                byte[] content = Encoding.UTF8.GetBytes(contentToPost);
+                string accessToken = await GetAccessToken();
 
-                var url = new Uri(string.Format("{0}/{1}", _spSiteUrl, odataQuery));
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    var odataQuery = "_api/web/folders";
+                    var contentToPost = @"{ '__metadata': { 'type': 'SP.Folder' }, 'ServerRelativeUrl': '" + relativePath + "'}";
+                    byte[] content = Encoding.UTF8.GetBytes(contentToPost);
 
-                var webRequest = (HttpWebRequest)WebRequest.Create(url);
-                webRequest.Headers.Add("Authorization", "Bearer " + accessToken);
-                webRequest.Headers.Add("X-RequestDigest", _digest);
-                webRequest.ContentLength = content.Length;
-                webRequest.ContentType = "application/json;odata=verbose";
-                webRequest.Method = "POST";
+                    var url = new Uri(string.Format("{0}/{1}", _spSiteUrl, odataQuery));
 
-                Stream newStream = webRequest.GetRequestStream();
-                newStream.Write(content, 0, content.Length);
-                newStream.Close();
+                    var webRequest = (HttpWebRequest)WebRequest.Create(url);
+                    webRequest.Headers.Add("Authorization", "Bearer " + accessToken);
+                    webRequest.Headers.Add("X-RequestDigest", _digest);
+                    webRequest.ContentLength = content.Length;
+                    webRequest.ContentType = "application/json;odata=verbose";
+                    webRequest.Method = "POST";
 
-                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
-                createFolderResponse = webResponse.StatusDescription;
+                    Stream newStream = webRequest.GetRequestStream();
+                    newStream.Write(content, 0, content.Length);
+                    newStream.Close();
+
+                    HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
+                    createFolderResponse = webResponse.StatusDescription;
+                }
+            }
+            catch (Exception ex)
+            {
+                createFolderResponse = ex.Message;
+                Console.WriteLine(ex.Message);
             }
 
             return createFolderResponse;
         }
 
-        public string RenameFolder(string relativePath, string newFolderName)
+        public async Task<string> RenameFolder(string relativePath, string newFolderName)
         {
             string renameFolderResponse = string.Empty;
-            string accessToken = GetAccessToken().Result;
+            string accessToken = await GetAccessToken();
 
             if (!string.IsNullOrEmpty(accessToken))
             {

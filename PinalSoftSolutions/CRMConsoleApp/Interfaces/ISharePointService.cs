@@ -1,10 +1,12 @@
-﻿namespace CRMConsoleApp.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace CRMConsoleApp.Interfaces
 {
     public interface ISharePointService
     {
-        string CreateFolder(string relativePath);
+        Task<string> CreateFolder(string relativePath);
 
-        string RenameFolder(string relativePath, string newFolderName);
+        Task<string> RenameFolder(string relativePath, string newFolderName);
 
         string GetFolderType(string sharePointToken, string relativePath);
     }
