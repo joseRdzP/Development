@@ -67,6 +67,7 @@
     <Compile Include="Common\SharePointCredentials.cs" />
     <Compile Include="Helpers\HttpHelper.cs" />
     <Compile Include="Helpers\SharePointHelper.cs" />
+    <Compile Include="Interfaces\ISharePointService.cs" />
     <Compile Include="Models\SharePointResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

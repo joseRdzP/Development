@@ -13,12 +13,32 @@ using System.Net;
 using System.Web.Script.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using CRMConsoleApp.Interfaces;
 
 namespace CRMConsoleApp.Helpers
 {
-    public class SharePointHelper
+    public class SharePointHelper : ISharePointService
     {
-        public static async Task<string> GetAccessToken()
+        private string _spSiteUrl;
+        private string _spClientId;
+        private string _spClientSecret;
+        private string _spRealm;
+        private string _spPrincipal;
+        private string _spTargetHost;
+        private string _digest;
+
+        public SharePointHelper(string spSiteUrl, string spClientId, string spClientSecret, string spRealm, string spPrincipal, string spTargetHost)
+        {
+            _spSiteUrl = spSiteUrl;
+            _spClientId = spClientId;
+            _spClientSecret = spClientSecret;
+            _spRealm = spRealm;
+            _spPrincipal = spPrincipal;
+            _spTargetHost = spTargetHost;
+            _digest = GetFormDigest(GetAccessToken().Result);
+        }
+
+        public async Task<string> GetAccessToken()
         {
             SharePointResponse sharePointResponse = new SharePointResponse();
             string accessToken = string.Empty;
@@ -29,9 +49,9 @@ namespace CRMConsoleApp.Helpers
             Dictionary<string, string> keys = new Dictionary<string, string>
             {
                 { "grant_type", "client_credentials" },
-                { "client_id", SharePointCredentials.ClientId + "@" + SharePointCredentials.Realm },
-                { "client_secret", SharePointCredentials.ClientSecret },
-                { "resource", SharePointCredentials.Principal + "/" + SharePointCredentials.TargetHost + "@" + SharePointCredentials.Realm }
+                { "client_id", _spClientId + "@" + _spRealm },
+                { "client_secret", _spClientSecret },
+                { "resource", _spPrincipal + "/" + _spTargetHost + "@" + _spRealm }
             };
 
             string httpResponse = await httpClient.PostAsync(SharePointCredentials.Uri, new FormUrlEncodedContent(keys)).Result.Content.ReadAsStringAsync();
@@ -51,100 +71,86 @@ namespace CRMConsoleApp.Helpers
             return accessToken;
         }
 
-        public static async Task<string> ProcessSharePointTasks(string sharePointToken, string folderName)
+        public string CreateFolder(string relativePath)
         {
-            string creationResponse = string.Empty;
-            string url = "https://" + SharePointCredentials.TargetHost + "/sites/" + SharePointCredentials.SPSiteName + "/";
-            using (HttpClient client = new HttpClient())
+            string createFolderResponse = string.Empty;
+            string accessToken = GetAccessToken().Result;
+
+            if (!string.IsNullOrEmpty(accessToken))
             {
-                client.BaseAddress = new Uri(url);
-                client.DefaultRequestHeaders.Add("Accept", "application/json; odata=verbose");
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + sharePointToken);
-                string digest = GetFormDigest(sharePointToken);
-                Console.WriteLine("Digest : " + digest);
-                Console.WriteLine("------------------------------------------------------------------------------------------");
-                try
-                {
-                    creationResponse = await CreateFolder(client, digest, folderName);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(ex.StackTrace);
-                }
-            }
-            return creationResponse;
-        }
-
-        public static async Task<string> CreateFolder(HttpClient client, string digest, string folderName)
-        {
-            string creationResponse = string.Empty;
-
-            client.DefaultRequestHeaders.Add("X-RequestDigest", digest);
-            var request = CreateRequest(folderName);
-            string json = JsonConvert.SerializeObject(request);
-            StringContent strContent = new StringContent(json);
-            strContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json;odata=verbose");
-            HttpResponseMessage response = await client.PostAsync("_api/web/getfolderbyserverrelativeurl('/sites/d365dev/Account')/folders", strContent);
-            if (response.IsSuccessStatusCode)
-            {
-                creationResponse = await response.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                Console.WriteLine(response.StatusCode);
-                Console.WriteLine(response.ReasonPhrase);
-                creationResponse = await response.Content.ReadAsStringAsync();
-            }
-
-            return creationResponse;
-        }
-
-        public static string RenameFolder(string sharePointToken, string siteUrl, string relativePath, string newFolderName)
-        {
-            string response = string.Empty;
-
-            string type = GetFolderType(sharePointToken, siteUrl, relativePath);
-
-            if (!string.IsNullOrEmpty(type))
-            {
-                var odataQuery = $"_api/web/GetFolderByServerRelativeUrl('{relativePath}')/ListItemAllFields";
-
-                var url = new Uri(string.Format("{0}{1}", siteUrl, odataQuery));
-
-                var webRequest = (HttpWebRequest)WebRequest.Create(url);
-                webRequest.Headers.Add("Authorization", "Bearer " + sharePointToken);
-                webRequest.Headers.Add("X-RequestDigest", GetFormDigest(sharePointToken));
-                webRequest.Headers.Add("X-HTTP-Method", "MERGE");
-                webRequest.Headers.Add("If-Match", "*");
-                webRequest.ContentType = "application/json;odata=verbose";
-                webRequest.Method = "POST";
-                
-                var contentToPost = @"{ '__metadata': { 'type': '" + type + "' }," +
-                    " 'Title': '" + newFolderName + "'," +
-                    "'FileLeafRef':'" + newFolderName + "'}";
-
+                var odataQuery = "_api/web/folders";
+                var contentToPost = @"{ '__metadata': { 'type': 'SP.Folder' }, 'ServerRelativeUrl': '" + relativePath + "'}";
                 byte[] content = Encoding.UTF8.GetBytes(contentToPost);
 
+                var url = new Uri(string.Format("{0}/{1}", _spSiteUrl, odataQuery));
+
+                var webRequest = (HttpWebRequest)WebRequest.Create(url);
+                webRequest.Headers.Add("Authorization", "Bearer " + accessToken);
+                webRequest.Headers.Add("X-RequestDigest", _digest);
                 webRequest.ContentLength = content.Length;
+                webRequest.ContentType = "application/json;odata=verbose";
+                webRequest.Method = "POST";
 
                 Stream newStream = webRequest.GetRequestStream();
                 newStream.Write(content, 0, content.Length);
                 newStream.Close();
 
                 HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
-
-                response = webResponse.StatusDescription;
+                createFolderResponse = webResponse.StatusDescription;
             }
 
-            return response;
+            return createFolderResponse;
         }
 
-        public static string GetFormDigest(string sharePointToken)
+        public string RenameFolder(string relativePath, string newFolderName)
+        {
+            string renameFolderResponse = string.Empty;
+            string accessToken = GetAccessToken().Result;
+
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                string type = GetFolderType(accessToken, relativePath);
+
+                if (!string.IsNullOrEmpty(type))
+                {
+                    var odataQuery = $"_api/web/GetFolderByServerRelativeUrl('{relativePath}')/ListItemAllFields";
+
+                    var url = new Uri(string.Format("{0}/{1}", _spSiteUrl, odataQuery));
+
+                    var webRequest = (HttpWebRequest)WebRequest.Create(url);
+                    webRequest.Headers.Add("Authorization", "Bearer " + accessToken);
+                    webRequest.Headers.Add("X-RequestDigest", _digest);
+                    webRequest.Headers.Add("X-HTTP-Method", "MERGE");
+                    webRequest.Headers.Add("If-Match", "*");
+                    webRequest.ContentType = "application/json;odata=verbose";
+                    webRequest.Method = "POST";
+
+                    var contentToPost = @"{ '__metadata': { 'type': '" + type + "' }," +
+                        " 'Title': '" + newFolderName + "'," +
+                        "'FileLeafRef':'" + newFolderName + "'}";
+
+                    byte[] content = Encoding.UTF8.GetBytes(contentToPost);
+
+                    webRequest.ContentLength = content.Length;
+
+                    Stream newStream = webRequest.GetRequestStream();
+                    newStream.Write(content, 0, content.Length);
+                    newStream.Close();
+
+                    HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
+
+                    renameFolderResponse = webResponse.StatusDescription;
+                }
+            }
+
+            return renameFolderResponse;
+        }
+
+        public string GetFormDigest(string sharePointToken)
         {
             string formDigest = null;
 
-            string resourceUrl = "https://" + SharePointCredentials.TargetHost + "/sites/" + SharePointCredentials.SPSiteName + "/_api/contextinfo";
+            string resourceUrl = _spSiteUrl + "/_api/contextinfo";
             HttpWebRequest wreq = WebRequest.Create(resourceUrl) as HttpWebRequest;
             wreq.Headers.Add("Authorization", "Bearer " + sharePointToken);
             wreq.Method = "POST";
@@ -168,57 +174,43 @@ namespace CRMConsoleApp.Helpers
             return formDigest;
         }
 
-        public static object CreateRequest(string folderPath)
-        {
-            var type = new { type = "SP.Folder" };
-            var request = new { __metadata = type, ServerRelativeUrl = folderPath };
-            return request;
-        }
-
-        public static string GetFolderType(string sharePointToken, string siteUrl, string relativePath)
+        public string GetFolderType(string sharePointToken, string relativePath)
         {
             var type = string.Empty;
-
+            string result = string.Empty;
             var odataQuery = $"_api/web/GetFolderByServerRelativeUrl('{relativePath}')/ListItemAllFields";
-
-            var url = new Uri(string.Format("{0}{1}", siteUrl, odataQuery));
+            var url = new Uri(string.Format("{0}/{1}", _spSiteUrl, odataQuery));
 
             var webRequest = (HttpWebRequest)WebRequest.Create(url);
-            webRequest.Headers.Add("X-RequestDigest", GetFormDigest(sharePointToken));
+            webRequest.Headers.Add("X-RequestDigest", _digest);
             webRequest.Accept = "application/json;odata=verbose";
             webRequest.Headers.Add("Authorization", "Bearer " + sharePointToken);
             webRequest.Method = "GET";
             webRequest.Accept = "application/json;odata=verbose";
             webRequest.ContentLength = 0;
             webRequest.ContentType = "application/json";
-
-            string result;
+  
             WebResponse wresp = webRequest.GetResponse();
-
             using (StreamReader sr = new StreamReader(wresp.GetResponseStream()))
             {
                 result = sr.ReadToEnd();
             }
-
             if (!string.IsNullOrEmpty(result))
             {
                 var nResponse = ConvertResponse(result);
-
                 if (nResponse != null)
                 {
                     var metadata = GetResponseValue(nResponse, "__metadata");
-
                     if (!string.IsNullOrEmpty(metadata))
                     {
                         type = GetResponseValue(ConvertResponse(metadata, ""), "type");
                     }
                 }
             }
-            Console.WriteLine("Folder Type : {0}", type);
             return type;
         }
 
-        public static Dictionary<string, string> ConvertResponse(string response, string param = "d")
+        public Dictionary<string, string> ConvertResponse(string response, string param = "d")
         {
             var itemlist = new Dictionary<string, string>();
             dynamic e;
@@ -280,7 +272,7 @@ namespace CRMConsoleApp.Helpers
             return itemlist;
         }
 
-        public static string GetResponseValue(Dictionary<string, string> responseList, string key)
+        public string GetResponseValue(Dictionary<string, string> responseList, string key)
         {
             if (responseList.ContainsKey(key))
             {

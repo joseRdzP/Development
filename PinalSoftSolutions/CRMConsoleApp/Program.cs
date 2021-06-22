@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using CRMConsoleApp.Common;
 using CRMConsoleApp.Helpers;
@@ -14,35 +11,47 @@ namespace CRMConsoleApp
         {
             try
             {
+                //Get SP Configurations
+                string spClientId = SharePointCredentials.ClientId;
+                string spClientSecret = SharePointCredentials.ClientSecret;
+                string spRealm = SharePointCredentials.Realm;
+                string spPrincipal = SharePointCredentials.Principal;
+                string spTargetHost = SharePointCredentials.TargetHost;
+                string spSiteUrl = $"https://{spTargetHost}/sites/{SharePointCredentials.SPSiteName}";
+
                 //Create Folder Params//////////////////
-                string folderName = "100 Alberto-98765";
+                string folderName = "00 Alberto-123456";
+                string extraFolders = "Order Agreements & Amendments,Quotes & Proposals,Termination Agreements";
                 ////////////////////////////////////////
 
                 //Rename Folder Params///////////////////////
                 string entityName = "account";
-                string oldRelativePath = "01 Alberto-404040";
-                string newFolderName = "100 Alberto-12345";
+                string oldRelativePath = "300 Alberto-123456";
+                string newFolderName = "300 Alberto-111111";
                 /////////////////////////////////////////////
 
-                string sharePointAccessToken = SharePointHelper.GetAccessToken().Result;
-                Console.WriteLine("------------------------------------------------------------------------------------------");
-                Console.WriteLine("Access Token : {0}", sharePointAccessToken);
-                Console.WriteLine("------------------------------------------------------------------------------------------");
-                if (!string.IsNullOrEmpty(sharePointAccessToken))
-                {
-                    //Create Folder
-                    string creationResponse = SharePointHelper.ProcessSharePointTasks(sharePointAccessToken, folderName).Result;
-                    Console.WriteLine("Create Folder Response : " + creationResponse);
-                    Console.WriteLine("------------------------------------------------------------------------------------------");
+                //Getting the SharePoint Service Instance
+                SharePointHelper sharePointService = new SharePointHelper(spSiteUrl, spClientId, spClientSecret, spRealm, spPrincipal, spTargetHost);
 
-                    //Rename Folder
-                    string renameResponse = SharePointHelper.RenameFolder(sharePointAccessToken, 
-                        "https://" + SharePointCredentials.TargetHost + "/sites/" + SharePointCredentials.SPSiteName + "/",
-                        $"{entityName}/{oldRelativePath}",
-                        newFolderName);
-                    Console.WriteLine("Rename Folder Response : " + renameResponse);
+                //Create Folder
+                //string creationResponse = SharePointHelper.CreateSharePointFolder(sharePointAccessToken, folderName).Result;
+                string creationResponse = sharePointService.CreateFolder($"{entityName}/{folderName}");
+                Console.WriteLine("Create Folder Response : " + creationResponse);
+                Console.WriteLine("------------------------------------------------------------------------------------------");
+
+                //Create Extra Folders
+                string[] folderList = extraFolders.Split(char.Parse(","));
+                foreach (var extraFolderName in folderList)
+                {
+                    string extraFolderCreationResponse = sharePointService.CreateFolder($"{entityName}/{folderName}/{extraFolderName}");
+                    Console.WriteLine("Create Extra Folder Response : " + extraFolderCreationResponse);
                     Console.WriteLine("------------------------------------------------------------------------------------------");
                 }
+
+                //Rename Folder
+                string renameResponse = sharePointService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
+                Console.WriteLine("Rename Folder Response : " + renameResponse);
+                Console.WriteLine("------------------------------------------------------------------------------------------");
             }
             catch (Exception ex)
             {
