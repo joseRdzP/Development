@@ -18,9 +18,10 @@ namespace CRMConsoleApp
                 string spPrincipal = SharePointCredentials.Principal;
                 string spTargetHost = SharePointCredentials.TargetHost;
                 string spSiteUrl = $"https://{spTargetHost}/sites/{SharePointCredentials.SPSiteName}";
+                string spUri = SharePointCredentials.Uri;
 
                 //Create Folder Params//////////////////
-                string folderName = "04 Alberto-444444";
+                string folderName = "Test 001 Alberto-123456";
                 string extraFolders = "Order Agreements & Amendments,Quotes & Proposals,Termination Agreements";
                 ////////////////////////////////////////
 
@@ -33,7 +34,7 @@ namespace CRMConsoleApp
                 Console.WriteLine("------------------------------------------------------------------------------------------");
 
                 //Getting the SP Access Token
-                string spAccessToken = SharePointHelper.GetSpAccessToken(spClientId, spRealm, spClientSecret, spPrincipal, spTargetHost).Result;
+                string spAccessToken = SharePointHelper.GetSpAccessToken(spClientId, spRealm, spClientSecret, spPrincipal, spTargetHost, spUri).Result;
 
                 if (!string.IsNullOrEmpty(spAccessToken))
                 {
@@ -61,9 +62,9 @@ namespace CRMConsoleApp
                         }
                         
                         //Rename Folder
-                        string renameResponse = spService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
-                        Console.WriteLine("Rename Folder Response : " + renameResponse);
-                        Console.WriteLine("------------------------------------------------------------------------------------------");
+                        //string renameResponse = spService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
+                        //Console.WriteLine("Rename Folder Response : " + renameResponse);
+                        //Console.WriteLine("------------------------------------------------------------------------------------------");
                     }
                 }
             }

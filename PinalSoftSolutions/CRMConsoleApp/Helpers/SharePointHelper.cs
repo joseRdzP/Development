@@ -17,7 +17,7 @@ namespace CRMConsoleApp.Helpers
 {
     public static class SharePointHelper
     {
-        public static async Task<string> GetSpAccessToken(string spClientId, string spRealm, string spClientSecret, string spPrincipal, string spTargetHost)
+        public static async Task<string> GetSpAccessToken(string spClientId, string spRealm, string spClientSecret, string spPrincipal, string spTargetHost, string spUri)
         {
             SharePointResponse sharePointResponse = new SharePointResponse();
             string accessToken = string.Empty;
@@ -33,7 +33,7 @@ namespace CRMConsoleApp.Helpers
                 { "resource", spPrincipal + "/" + spTargetHost + "@" + spRealm }
             };
 
-            string httpResponse = await httpClient.PostAsync(SharePointCredentials.Uri, new FormUrlEncodedContent(keys)).Result.Content.ReadAsStringAsync();
+            string httpResponse = await httpClient.PostAsync(spUri, new FormUrlEncodedContent(keys)).Result.Content.ReadAsStringAsync();
 
             if (!string.IsNullOrEmpty(httpResponse))
             {
