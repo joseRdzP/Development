@@ -62,9 +62,9 @@ namespace CRMConsoleApp
                         }
                         
                         //Rename Folder
-                        //string renameResponse = spService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
-                        //Console.WriteLine("Rename Folder Response : " + renameResponse);
-                        //Console.WriteLine("------------------------------------------------------------------------------------------");
+                        string renameResponse = spService.RenameFolder($"{entityName}/{oldRelativePath}", newFolderName);
+                        Console.WriteLine("Rename Folder Response : " + renameResponse);
+                        Console.WriteLine("------------------------------------------------------------------------------------------");
                     }
                 }
             }

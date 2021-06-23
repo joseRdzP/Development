@@ -12,12 +12,12 @@
         //public const string SPSiteName = "d365dev";
 
         ////////https://appriver3651001439.sharepoint.com/sites/d365dev
-        public const string ClientId = "cc24b015-0b89-4823-9480-da016da18429";
-        public const string ClientSecret = "Cy2TTVxF5tobp7xAxsZuNFmgwfOHmudYka96IgnMymc=";
-        public const string TargetHost = "appriver3651001439.sharepoint.com";
-        public const string Principal = "00000003-0000-0ff1-ce00-000000000000";
-        public const string Realm = "8559e755-a69a-4d4b-9b49-c423de3d1598";
-        public const string Uri = "https://accounts.accesscontrol.windows.net/8559e755-a69a-4d4b-9b49-c423de3d1598/tokens/OAuth/2";
-        public const string SPSiteName = "d365dev";
+        public const string ClientId = "cc24b015-0b89-4823-9480-da016da18429"; //SharePointClientId
+        public const string ClientSecret = "Cy2TTVxF5tobp7xAxsZuNFmgwfOHmudYka96IgnMymc="; //SharePointClientSecret
+        public const string TargetHost = "appriver3651001439.sharepoint.com"; //SharePointTargetHost
+        public const string Principal = "00000003-0000-0ff1-ce00-000000000000"; //SharePointPrincipal
+        public const string Realm = "8559e755-a69a-4d4b-9b49-c423de3d1598"; //SharePointRealm
+        public const string Uri = "https://accounts.accesscontrol.windows.net/8559e755-a69a-4d4b-9b49-c423de3d1598/tokens/OAuth/2"; //SharePointUri
+        public const string SPSiteName = "d365dev"; //SharePointSiteName
     }
 }
