@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="Common\SharePointCredentials.cs" />
     <Compile Include="Common\SharePointService.cs" />
+    <Compile Include="Helpers\PluginHelper.cs" />
     <Compile Include="Helpers\SharePointHelper.cs" />
     <Compile Include="Interfaces\ISharePointService.cs" />
     <Compile Include="Models\SharePointResponse.cs" />

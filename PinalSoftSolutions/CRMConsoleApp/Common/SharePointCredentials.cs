@@ -1,4 +1,4 @@
-﻿namespace CRMConsoleApp.Common
+﻿namespace zCRMConsoleApp.Common
 {
     public class SharePointCredentials
     {

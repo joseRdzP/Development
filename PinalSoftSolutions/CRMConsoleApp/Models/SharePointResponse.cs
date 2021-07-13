@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace CRMConsoleApp.Models
+namespace zCRMConsoleApp.Models
 {
     [DataContract]
     public class SharePointResponse

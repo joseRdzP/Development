@@ -4,16 +4,16 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using CRMConsoleApp.Common;
+using zCRMConsoleApp.Common;
 using System.Runtime.Serialization.Json;
 using System.IO;
-using CRMConsoleApp.Models;
+using zCRMConsoleApp.Models;
 using System.Net;
 using System.Web.Script.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace CRMConsoleApp.Helpers
+namespace zCRMConsoleApp.Helpers
 {
     public static class SharePointHelper
     {

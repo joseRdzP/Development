@@ -2,10 +2,10 @@
 using System.Text;
 using System.IO;
 using System.Net;
-using CRMConsoleApp.Interfaces;
-using CRMConsoleApp.Helpers;
+using zCRMConsoleApp.Interfaces;
+using zCRMConsoleApp.Helpers;
 
-namespace CRMConsoleApp.Common
+namespace zCRMConsoleApp.Common
 {
     public class SharePointService : ISharePointService
     {

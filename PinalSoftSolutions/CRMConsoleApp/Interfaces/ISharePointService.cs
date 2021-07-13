@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace CRMConsoleApp.Interfaces
+namespace zCRMConsoleApp.Interfaces
 {
     public interface ISharePointService
     {

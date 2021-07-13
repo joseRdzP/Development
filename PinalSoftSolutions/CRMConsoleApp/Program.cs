@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CRMConsoleApp.Common;
-using CRMConsoleApp.Helpers;
+using zCRMConsoleApp.Common;
+using zCRMConsoleApp.Helpers;
 
-namespace CRMConsoleApp
+namespace zCRMConsoleApp
 {
     class Program
     {
@@ -11,6 +11,10 @@ namespace CRMConsoleApp
         {
             try
             {
+                //Call OData Legacy API
+                PluginHelper.GetAccountData();
+
+                /*
                 //Get SP Configurations
                 string spClientId = SharePointCredentials.ClientId;
                 string spClientSecret = SharePointCredentials.ClientSecret;
@@ -67,6 +71,7 @@ namespace CRMConsoleApp
                         Console.WriteLine("------------------------------------------------------------------------------------------");
                     }
                 }
+                */
             }
             catch (Exception ex)
             {
