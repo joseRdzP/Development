@@ -12,7 +12,8 @@ namespace zCRMConsoleApp
             try
             {
                 //Call OData Legacy API
-                PluginHelper.GetAccountData();
+                //PluginHelper.GetAccountData();
+                PluginHelper.GetAccountDataAzure();
 
                 /*
                 //Get SP Configurations
