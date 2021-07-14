@@ -33,14 +33,11 @@ namespace zCRMConsoleApp.Helpers
             }
         }
 
-        public static void GetAccountDataAzure()
+        public static void GetAccountDataAzure(string apiUrl)
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11;
 
-            var odataQuery = "https://virtualcruds20210713172404.azurewebsites.net/api/values";
-
-            var webRequest = (HttpWebRequest)WebRequest.Create(odataQuery);
-            //webRequest.Headers.Add("AccessToken", "095c1d5b-545c-4891-8ab2-c02057653689");
+            var webRequest = (HttpWebRequest)WebRequest.Create(apiUrl);
             webRequest.ContentType = "application/json; charset=utf-8";
             webRequest.Method = "GET";
 

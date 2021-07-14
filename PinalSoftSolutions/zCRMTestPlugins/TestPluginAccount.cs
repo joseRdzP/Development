@@ -44,7 +44,8 @@ namespace zCRMTestPlugins
                     tracingService.Trace("TestPluginAccount : Executing Plugin...");
 
                     //GetAccountData3(tracingService);
-                    GetAccountDataAzure(tracingService);
+                    string apiUrl = "https://virtualcruds20210713172404.azurewebsites.net/api/values";
+                    GetAccountDataAzure(apiUrl, tracingService);
                 }
 
                 catch (FaultException<OrganizationServiceFault> ex)
@@ -123,13 +124,11 @@ namespace zCRMTestPlugins
             var jsonResponseString = responseMessage.GetAwaiter().GetResult();
         }
 
-        public static void GetAccountDataAzure(ITracingService tracer)
+        public static void GetAccountDataAzure(string apiUrl, ITracingService tracer)
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11;
 
-            var odataQuery = "https://virtualcruds20210713172404.azurewebsites.net/api/values";
-
-            var webRequest = (HttpWebRequest)WebRequest.Create(odataQuery);
+            var webRequest = (HttpWebRequest)WebRequest.Create(apiUrl);
             webRequest.ContentType = "application/json; charset=utf-8";
             webRequest.Method = "GET";
 

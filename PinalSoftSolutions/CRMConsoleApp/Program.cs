@@ -12,8 +12,9 @@ namespace zCRMConsoleApp
             try
             {
                 //Call OData Legacy API
+                string apiUrl = "https://virtualcruds20210713172404.azurewebsites.net/api/values";
                 //PluginHelper.GetAccountData();
-                PluginHelper.GetAccountDataAzure();
+                PluginHelper.GetAccountDataAzure(apiUrl);
 
                 /*
                 //Get SP Configurations
